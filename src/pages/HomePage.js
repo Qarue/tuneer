@@ -7,7 +7,8 @@ const HomePage = () => {
     return (
         <div className="homePage">
             <Link to="/join-pdf" className="utilityTile">Join PDF</Link>
-            {/* Repeat for other utilities */}
+            <Link to="/base64decode" className="utilityTile">Base64 Decode</Link>
+            <Link to="/jwtDecoder" className="utilityTile">JWT Decode</Link>
         </div>
     );
 }
