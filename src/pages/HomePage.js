@@ -9,6 +9,7 @@ const HomePage = () => {
             <Link to="/join-pdf" className="utilityTile">Join PDF</Link>
             <Link to="/base64decode" className="utilityTile">Base64 Decode</Link>
             <Link to="/jwtDecoder" className="utilityTile">JWT Decode</Link>
+            <Link to="/split-pdf" className="utilityTile">Split PDF</Link>
         </div>
     );
 }
