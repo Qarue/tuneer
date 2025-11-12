@@ -1,0 +1,8 @@
+{
+  "extends": "./tsconfig.app.json",
+  "include": ["src", "vitest.setup.ts", "vite.config.ts", "playwright.config.ts", "e2e/**/*.ts"],
+  "compilerOptions": {
+    "composite": false,
+    "types": ["node", "vite/client"]
+  }
+}
