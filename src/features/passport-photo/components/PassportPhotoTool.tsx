@@ -28,6 +28,52 @@ import {
 } from '../utils/presets'
 
 const EXPORT_MIME = 'image/jpeg'
+const MAX_FRACTION_DENOMINATOR = 8
+
+const formatInches = (value: number): string => {
+  const absValue = Math.abs(value)
+  let bestNumerator = 0
+  let bestDenominator = 1
+  let smallestDiff = Number.POSITIVE_INFINITY
+
+  for (let denominator = 1; denominator <= MAX_FRACTION_DENOMINATOR; denominator += 1) {
+    const numerator = Math.round(absValue * denominator)
+    if (numerator === 0 && absValue !== 0) {
+      continue
+    }
+
+    const approximation = numerator / denominator
+    const diff = Math.abs(approximation - absValue)
+    if (diff < smallestDiff) {
+      smallestDiff = diff
+      bestNumerator = numerator
+      bestDenominator = denominator
+    }
+  }
+
+  const signedNumerator = value < 0 ? -bestNumerator : bestNumerator
+  const approximation = bestDenominator !== 0 ? signedNumerator / bestDenominator : value
+  const allowFraction = Math.abs(approximation - value) <= 0.02
+
+  if (!allowFraction) {
+    return `${value.toFixed(2)} in`
+  }
+
+  const whole = Math.trunc(signedNumerator / bestDenominator)
+  const remainder = Math.abs(signedNumerator % bestDenominator)
+
+  if (remainder === 0) {
+    return `${whole} in`
+  }
+
+  if (whole === 0) {
+    return `${remainder}/${bestDenominator} in`
+  }
+
+  return `${whole} ${remainder}/${bestDenominator} in`
+}
+
+const formatMillimeters = (value: number): string => `${Number(value.toFixed(1))} mm`
 
 export function PassportPhotoTool(): ReactElement {
   const [activePresetId, setActivePresetId] = useState(defaultPassportPresetId)
@@ -37,6 +83,8 @@ export function PassportPhotoTool(): ReactElement {
   const [isLoading, setIsLoading] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [isOverlayVisible, setIsOverlayVisible] = useState(true)
+  const [measurementUnit, setMeasurementUnit] = useState<'in' | 'mm'>('in')
 
   const [crop, setCrop] = useState({ x: 0, y: 0 })
   const [zoom, setZoom] = useState(1)
@@ -50,6 +98,81 @@ export function PassportPhotoTool(): ReactElement {
     [activePresetId],
   )
 
+  const overlaySvg = useMemo(() => {
+    if (!activePreset) {
+      return null
+    }
+
+    const aspect = activePreset.widthPx / activePreset.heightPx
+    if (!Number.isFinite(aspect) || aspect <= 0) {
+      return null
+    }
+
+    const viewBoxWidth = 100
+    const viewBoxHeight = viewBoxWidth / aspect
+    const frameRect = { x: 0, y: 0, width: viewBoxWidth, height: viewBoxHeight }
+    const frameRight = frameRect.x + frameRect.width
+    const frameBottom = frameRect.y + frameRect.height
+    const labelOffsetX = frameRect.x + 1.6
+    const bottomLabelY = frameBottom - 1.2
+    const topLabelY = frameRect.y + 1.2
+
+    const toSvg = (value: number) => (Number.isFinite(value) ? value.toFixed(2) : '0')
+
+    const horizontalSegments = 3
+    const verticalSegments = 3
+    const horizontalLines: string[] = []
+    const verticalLines: string[] = []
+    const labels: string[] = []
+
+    const totalHeightInches = activePreset.heightInches
+    const totalHeightMillimeters = totalHeightInches * 25.4
+    const formatMeasurement = (ratio: number): string => {
+      if (measurementUnit === 'in') {
+        return formatInches(totalHeightInches * ratio)
+      }
+
+      return formatMillimeters(totalHeightMillimeters * ratio)
+    }
+
+    const bottomLabel = measurementUnit === 'in' ? '0 in' : '0 mm'
+    const topLabel = formatMeasurement(1)
+
+    for (let i = 1; i < horizontalSegments; i += 1) {
+      const ratio = i / horizontalSegments
+      const y = frameBottom - ratio * frameRect.height
+
+      horizontalLines.push(
+        `<line x1="${toSvg(frameRect.x)}" y1="${toSvg(y)}" x2="${toSvg(frameRight)}" y2="${toSvg(y)}" stroke="rgba(0,0,0,0.35)" stroke-width="0.7" />`,
+      )
+      labels.push(
+        `<text x="${toSvg(labelOffsetX)}" y="${toSvg(y)}" fill="rgba(0,0,0,0.78)" font-size="3.2" font-family="'Inter', 'Segoe UI', sans-serif" dominant-baseline="middle">${formatMeasurement(ratio)}</text>`,
+      )
+    }
+
+    labels.push(
+      `<text x="${toSvg(labelOffsetX)}" y="${toSvg(bottomLabelY)}" fill="rgba(0,0,0,0.78)" font-size="3.2" font-family="'Inter', 'Segoe UI', sans-serif" dominant-baseline="middle">${bottomLabel}</text>`,
+    )
+    labels.push(
+      `<text x="${toSvg(labelOffsetX)}" y="${toSvg(topLabelY)}" fill="rgba(0,0,0,0.78)" font-size="3.2" font-family="'Inter', 'Segoe UI', sans-serif" dominant-baseline="middle">${topLabel}</text>`,
+    )
+
+    for (let i = 1; i < verticalSegments; i += 1) {
+      const ratio = i / verticalSegments
+      const x = frameRect.x + ratio * frameRect.width
+      verticalLines.push(
+        `<line x1="${toSvg(x)}" y1="${toSvg(frameRect.y)}" x2="${toSvg(x)}" y2="${toSvg(frameBottom)}" stroke="rgba(0,0,0,0.3)" stroke-width="0.7" />`,
+      )
+    }
+
+    return `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${toSvg(viewBoxWidth)} ${toSvg(viewBoxHeight)}" preserveAspectRatio="xMidYMid meet">
+  ${horizontalLines.join('\n  ')}
+  ${verticalLines.join('\n  ')}
+  ${labels.join('\n  ')}
+</svg>`
+  }, [activePreset, measurementUnit])
+
   type CropperCustomStyles = {
     containerStyle?: CSSProperties
     mediaStyle?: CSSProperties
@@ -57,14 +180,25 @@ export function PassportPhotoTool(): ReactElement {
   }
 
   const cropperStyles = useMemo<CropperCustomStyles>(
-    () => ({
-      cropAreaStyle: {
-        border: '2px solid rgba(255, 255, 255, 0.92)',
-        borderRadius: 16,
+    () => {
+      const cropArea: CSSProperties = {
+        borderRadius: 0,
         boxShadow: '0 0 0 1600px rgba(15, 23, 42, 1)',
-      },
-    }),
-    [],
+      }
+
+      if (overlaySvg && isOverlayVisible) {
+        const encoded = encodeURIComponent(overlaySvg)
+        cropArea.backgroundImage = `url("data:image/svg+xml,${encoded}")`
+        cropArea.backgroundRepeat = 'no-repeat'
+        cropArea.backgroundSize = '100% 100%'
+        cropArea.backgroundPosition = 'center'
+      }
+
+      return {
+        cropAreaStyle: cropArea,
+      }
+    },
+    [overlaySvg, isOverlayVisible],
   )
 
   useEffect(() => {
@@ -298,7 +432,7 @@ export function PassportPhotoTool(): ReactElement {
                     onRotationChange={setRotation}
                     onCropComplete={(_, areaPixels) => setCroppedAreaPixels(areaPixels)}
                     zoomWithScroll
-                    showGrid
+                    showGrid={false}
                     cropShape="rect"
                     style={cropperStyles}
                   />
@@ -350,6 +484,24 @@ export function PassportPhotoTool(): ReactElement {
                     onClick={handleResetAdjustments}
                   >
                     Reset crop
+                  </Button>
+                  <Button
+                    variant="light"
+                    color="blue"
+                    onClick={() => {
+                      setIsOverlayVisible(previous => !previous)
+                    }}
+                  >
+                    {isOverlayVisible ? 'Hide overlay' : 'Show overlay'}
+                  </Button>
+                  <Button
+                    variant="light"
+                    color="blue"
+                    onClick={() => {
+                      setMeasurementUnit(previous => (previous === 'in' ? 'mm' : 'in'))
+                    }}
+                  >
+                    Switch to {measurementUnit === 'in' ? 'mm' : 'in'}
                   </Button>
                   <Button
                     variant="subtle"
