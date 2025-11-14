@@ -4,8 +4,8 @@ export const siteConfig = {
   tagline: 'Browser Toolkit',
   description:
     'Tuneer is a privacy-first toolkit of in-browser utilities for PDFs, text encoding, images, and identity photos—no uploads, just fast results.',
-  url: 'https://tuneer.app',
-  socialImage: 'https://tuneer.app/social-card.svg',
+  url: 'https://tuneer.vercel.app',
+  socialImage: 'https://tuneer.vercel.app/social-card.svg',
   keywords: [
     'browser tools',
     'pdf editor',
@@ -20,7 +20,7 @@ export const siteConfig = {
     title: 'Tuneer Toolkit | Browser Toolkit',
     description:
       'Privacy-first browser utilities for PDFs, images, text encoding, and identity photos.',
-    canonical: 'https://tuneer.app/',
+    canonical: 'https://tuneer.vercel.app/',
   },
 }
 

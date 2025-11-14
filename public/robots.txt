@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://tuneer.app/sitemap.xml
+Sitemap: https://tuneer.vercel.app/sitemap.xml

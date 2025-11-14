@@ -1,42 +1,42 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://tuneer.app/</loc>
+  <loc>https://tuneer.vercel.app/</loc>
     <lastmod>2025-11-13</lastmod>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://tuneer.app/tools/base64-encoder</loc>
+  <loc>https://tuneer.vercel.app/tools/base64-encoder</loc>
     <lastmod>2025-11-13</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://tuneer.app/tools/jwt-encode-decode</loc>
+  <loc>https://tuneer.vercel.app/tools/jwt-encode-decode</loc>
     <lastmod>2025-11-13</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://tuneer.app/tools/image-convert</loc>
+  <loc>https://tuneer.vercel.app/tools/image-convert</loc>
     <lastmod>2025-11-13</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://tuneer.app/tools/passport-photo-resizer</loc>
+  <loc>https://tuneer.vercel.app/tools/passport-photo-resizer</loc>
     <lastmod>2025-11-13</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://tuneer.app/tools/pdf-join</loc>
+  <loc>https://tuneer.vercel.app/tools/pdf-join</loc>
     <lastmod>2025-11-13</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://tuneer.app/tools/pdf-split</loc>
+  <loc>https://tuneer.vercel.app/tools/pdf-split</loc>
     <lastmod>2025-11-13</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://tuneer.app/tools/pdf-compress</loc>
+  <loc>https://tuneer.vercel.app/tools/pdf-compress</loc>
     <lastmod>2025-11-13</lastmod>
     <priority>0.8</priority>
   </url>
