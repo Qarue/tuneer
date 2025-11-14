@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1f2a6d" />
+      <stop offset="100%" stop-color="#4450b0" />
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#82a1ff" />
+      <stop offset="100%" stop-color="#5c84ff" />
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)" />
+  <g transform="translate(120, 160)">
+    <rect x="0" y="0" width="320" height="320" rx="32" fill="rgba(255,255,255,0.08)" />
+    <path d="M96 80h128c26.5 0 48 21.5 48 48v64c0 26.5-21.5 48-48 48H96c-26.5 0-48-21.5-48-48v-64c0-26.5 21.5-48 48-48z" fill="url(#accent)" opacity="0.9" />
+    <circle cx="160" cy="160" r="36" fill="#ffffff" opacity="0.92" />
+    <path d="M124 212c16-18 80-18 96 0 9 10 4 36-14 36h-68c-18 0-23-26-14-36z" fill="#ffffff" opacity="0.88" />
+  </g>
+  <g transform="translate(480, 200)" fill="#ffffff">
+    <text font-family="Inter, 'Segoe UI', sans-serif" font-size="64" font-weight="700">Tuneer Toolkit</text>
+    <text y="88" font-family="Inter, 'Segoe UI', sans-serif" font-size="28" opacity="0.85">
+      Privacy-first browser utilities for PDFs, images, text, and identity workflows.
+    </text>
+    <text y="148" font-family="Inter, 'Segoe UI', sans-serif" font-size="22" opacity="0.75">
+      Compress, merge, convert, and validate without uploading a single file.
+    </text>
+    <text y="208" font-family="Inter, 'Segoe UI', sans-serif" font-size="22" opacity="0.75">
+      https://tuneer.app
+    </text>
+  </g>
+</svg>

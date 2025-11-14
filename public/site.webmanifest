@@ -1,0 +1,16 @@
+{
+  "name": "Tuneer Toolkit",
+  "short_name": "Tuneer",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#192050",
+  "description": "Privacy-first browser toolkit for PDFs, images, text encoding, and identity photos.",
+  "icons": [
+    {
+      "src": "/vite.svg",
+      "type": "image/svg+xml",
+      "sizes": "512x512"
+    }
+  ]
+}

@@ -1,4 +1,5 @@
 import {
+  Anchor,
   AppShell,
   Badge,
   Burger,
@@ -18,6 +19,7 @@ import { NavLink as RouterNavLink, Outlet, useLocation } from 'react-router-dom'
 
 import { type ToolDefinition, toolRegistry } from '@/app/tool-registry'
 import { ThemeToggle } from '@/components/ui/ThemeToggle'
+import { siteConfig } from '@/config/site'
 
 export function ShellLayout(): ReactElement {
   const location = useLocation()
@@ -47,6 +49,7 @@ export function ShellLayout(): ReactElement {
         breakpoint: 'md',
         collapsed: { mobile: !opened },
       }}
+      footer={{ height: 80 }}
     >
       <AppShell.Header>
         <Group h="100%" px="md" justify="space-between">
@@ -108,6 +111,35 @@ export function ShellLayout(): ReactElement {
           <Outlet />
         </Container>
       </AppShell.Main>
+
+      <AppShell.Footer>
+        <Container size="xl" py="md">
+          <Group justify="space-between" align="center" gap="sm" wrap="wrap">
+            <Stack gap={2}>
+              <Text size="sm" fw={600}>
+                {siteConfig.name} Toolkit
+              </Text>
+              <Text size="xs" c="dimmed">
+                Fast, private browser utilities for daily PDF, media, and text workflows.
+              </Text>
+            </Stack>
+            <Group gap="md" wrap="wrap">
+              <Anchor component={RouterNavLink} to="/tools/pdf-join" size="sm">
+                Merge PDFs
+              </Anchor>
+              <Anchor component={RouterNavLink} to="/tools/pdf-split" size="sm">
+                Split PDFs
+              </Anchor>
+              <Anchor component={RouterNavLink} to="/tools/base64-encoder" size="sm">
+                Base64 Encoder
+              </Anchor>
+              <Anchor component={RouterNavLink} to="/tools/image-convert" size="sm">
+                Image Converter
+              </Anchor>
+            </Group>
+          </Group>
+        </Container>
+      </AppShell.Footer>
     </AppShell>
   )
 }

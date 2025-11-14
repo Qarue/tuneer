@@ -4,10 +4,24 @@ import { type ReactElement, Suspense } from 'react'
 import { Navigate, useParams } from 'react-router-dom'
 
 import { defaultToolId, toolMap } from '@/app/tool-registry'
+import { siteConfig } from '@/config/site'
+import { useSeo } from '@/hooks/useSeo'
 
 export function ToolPage(): ReactElement {
   const { toolId } = useParams<{ toolId: string }>()
   const tool = toolId ? toolMap.get(toolId) : undefined
+
+  useSeo({
+    title: tool?.name,
+    description: tool?.description,
+    keywords: tool?.keywords,
+    canonical: tool ? `${siteConfig.url}/tools/${tool.id}` : undefined,
+    ogTitle: tool ? `${tool.name} | ${siteConfig.name}` : undefined,
+    ogDescription: tool?.description,
+    ogUrl: tool ? `${siteConfig.url}/tools/${tool.id}` : undefined,
+    twitterTitle: tool ? `${tool.name} | ${siteConfig.name}` : undefined,
+    twitterDescription: tool?.description,
+  })
 
   if (!tool) {
     if (defaultToolId) {

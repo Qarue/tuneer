@@ -15,11 +15,11 @@ const ORIENTATION_OPERATIONS: Record<number, (ctx: CanvasRenderingContext2D, wid
     ctx.translate(width, height)
     ctx.rotate(Math.PI)
   },
-  4: (ctx, width, height) => {
+  4: (ctx, _width, height) => {
     ctx.translate(0, height)
     ctx.scale(1, -1)
   },
-  5: (ctx, width, height) => {
+  5: (ctx, _width, height) => {
     ctx.rotate(0.5 * Math.PI)
     ctx.scale(1, -1)
     ctx.translate(0, -height)
