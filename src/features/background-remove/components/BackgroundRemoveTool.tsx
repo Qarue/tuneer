@@ -14,10 +14,10 @@ import { type FileRejection } from '@mantine/dropzone'
 import { IconDownload, IconPhotoOff } from '@tabler/icons-react'
 import { type ReactElement, useEffect, useState } from 'react'
 
-import { ImageDropzone } from '@/components/ui/ImageDropzone'
 import { ImageComparison } from '@/components/ui/ImageComparison'
+import { ImageDropzone } from '@/components/ui/ImageDropzone'
 
-import { removeBackground } from '../utils/segmentation'
+import { type ProgressEvent,removeBackground } from '../utils/segmentation'
 
 const ACCEPTED_MIME_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/avif']
 
@@ -46,8 +46,8 @@ export function BackgroundRemoveTool(): ReactElement {
     }
   }, [processedImageSrc])
 
-  const handleRemoveBackground = async (url?: string | unknown) => {
-    const targetUrl = typeof url === 'string' ? url : imageSrc
+  const handleRemoveBackground = async (url?: string) => {
+    const targetUrl: string | null = typeof url === 'string' ? url : imageSrc
     if (!targetUrl) return
 
     setIsLoading(true)
@@ -56,7 +56,7 @@ export function BackgroundRemoveTool(): ReactElement {
     setError(null)
 
     try {
-      const resultUrl = await removeBackground(targetUrl, (data: any) => {
+      const resultUrl = await removeBackground(targetUrl, (data: ProgressEvent) => {
         // transformers.js progress callback
         if (data.status === 'progress') {
           setProgress(data.progress)
@@ -86,7 +86,7 @@ export function BackgroundRemoveTool(): ReactElement {
     setOriginalFileName(file.name.replace(/\.[^/.]+$/, ''))
     setProcessedImageSrc(null)
     setError(null)
-    handleRemoveBackground(url)
+    void handleRemoveBackground(url)
   }
 
   const handleDownload = () => {
@@ -97,6 +97,24 @@ export function BackgroundRemoveTool(): ReactElement {
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
+  }
+
+  const handleReset = () => {
+    try {
+      if (processedImageSrc) {
+        URL.revokeObjectURL(processedImageSrc)
+      }
+      if (imageSrc) {
+        URL.revokeObjectURL(imageSrc)
+      }
+    } catch {
+      console.warn('Failed to revoke object URLs')
+    }
+    setProcessedImageSrc(null)
+    setImageSrc(null)
+    setError(null)
+    setProgress(0)
+    setStatus('')
   }
 
   return (
@@ -120,9 +138,9 @@ export function BackgroundRemoveTool(): ReactElement {
           <Stack gap="md">
             {processedImageSrc ? (
               <Stack gap="md">
-                <ImageComparison before={imageSrc!} after={processedImageSrc} />
+                <ImageComparison before={imageSrc} after={processedImageSrc} />
                 <Group justify="center">
-                  <Button onClick={() => setImageSrc(null)} variant="light" color="gray">
+                  <Button onClick={handleReset} variant="light" color="gray">
                     Reset
                   </Button>
                   <Button onClick={handleDownload} leftSection={<IconDownload size={16} />}>
@@ -151,10 +169,10 @@ export function BackgroundRemoveTool(): ReactElement {
                 )}
 
                 <Group justify="center">
-                  <Button onClick={() => setImageSrc(null)} variant="light" color="gray">
+                  <Button onClick={handleReset} variant="light" color="gray">
                     Reset
                   </Button>
-                  <Button onClick={handleRemoveBackground} loading={isLoading}>
+                  <Button onClick={() => void handleRemoveBackground()} loading={isLoading}>
                     Remove Background
                   </Button>
                 </Group>

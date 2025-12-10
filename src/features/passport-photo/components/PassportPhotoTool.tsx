@@ -21,7 +21,7 @@ import Cropper, { type Area } from 'react-easy-crop'
 
 import { ImageDropzone } from '@/components/ui/ImageDropzone'
 
-import { removeBackground } from '../../background-remove/utils/segmentation'
+import { type ProgressEvent, removeBackground } from '../../background-remove/utils/segmentation'
 import { canvasToBlobUrl, cropImageToCanvas } from '../utils/canvas'
 import { loadFileWithOrientation } from '../utils/image'
 import {
@@ -339,7 +339,7 @@ export function PassportPhotoTool(): ReactElement {
       setBgRemovalProgress(0)
 
       try {
-        const resultUrl = await removeBackground(originalImageSrc, (data: any) => {
+        const resultUrl = await removeBackground(originalImageSrc, (data: ProgressEvent) => {
           if (data.status === 'progress') {
             setBgRemovalProgress(data.progress)
           }

@@ -16,6 +16,7 @@ export function ImageDropzone({
   loading,
   maxSize = 5 * 1024 * 1024,
   accept = IMAGE_MIME_TYPE,
+  onDrop,
   ...props
 }: ImageDropzoneProps): ReactElement {
   useEffect(() => {
@@ -34,8 +35,8 @@ export function ImageDropzone({
         }
       }
 
-      if (files.length > 0 && props.onDrop) {
-        props.onDrop(files)
+      if (files.length > 0 && onDrop) {
+        onDrop(files)
       }
     }
 
@@ -43,7 +44,7 @@ export function ImageDropzone({
     return () => {
       window.removeEventListener('paste', handlePaste)
     }
-  }, [loading, props.onDrop])
+  }, [loading, onDrop])
 
   const getFormats = () => {
     const types = Array.isArray(accept) ? accept : Object.keys(accept)
@@ -72,6 +73,7 @@ export function ImageDropzone({
       accept={accept}
       maxSize={maxSize}
       loading={loading}
+      onDrop={onDrop}
       radius="lg"
       p="xl"
       className="cursor-pointer border-dashed border-2"

@@ -1,16 +1,19 @@
-// Singleton to hold the pipeline promise
-let segmenterPromise: Promise<any> | null = null
+import type { ProgressCallback, ProgressInfo, RawImage } from '@huggingface/transformers'
 
-export type SegmentationResult = {
-  originalUrl: string
-  processedUrl: string
-  maskUrl?: string
-}
+// Singleton to hold the pipeline promise
+type ImageSegmentationOutput = { label: string | null; score: number | null; mask: RawImage }
+type Segmenter = (url: string) => Promise<ImageSegmentationOutput[]>
+export type ProgressEvent = ProgressInfo
+let segmenterPromise: Promise<Segmenter> | null = null
 
 /**
- * Lazy loads the transformers library and initializes the segmentation pipeline.
+ * Initializes and caches the segmentation pipeline.
+ * Notes on progress reporting:
+ * - The `progress_callback` provided here only reports during initial model downloads.
+ * - Subsequent calls reuse the cached pipeline and won't emit model-download progress.
+ * - Inference itself does not report progress via this callback.
  */
-function getSegmenter(onProgress?: (progress: any) => void) {
+function getSegmenter(onProgress?: ProgressCallback) {
   if (!segmenterPromise) {
     segmenterPromise = (async () => {
       try {
@@ -24,16 +27,18 @@ function getSegmenter(onProgress?: (progress: any) => void) {
         // Initialize the pipeline
         // using 'image-segmentation' task with the RMBG-1.4 model
         try {
-          return await pipeline('image-segmentation', 'briaai/RMBG-1.4', {
+          const p = await pipeline('image-segmentation', 'briaai/RMBG-1.4', {
             device: 'webgpu', // Try WebGPU first
             progress_callback: onProgress,
           })
+          return p as unknown as Segmenter
         } catch (error) {
           console.warn('WebGPU failed, falling back to WASM:', error)
-          return await pipeline('image-segmentation', 'briaai/RMBG-1.4', {
+          const p = await pipeline('image-segmentation', 'briaai/RMBG-1.4', {
             device: 'wasm',
             progress_callback: onProgress,
           })
+          return p as unknown as Segmenter
         }
       } catch (error) {
         console.error('Failed to load segmentation model:', error)
@@ -51,40 +56,42 @@ function getSegmenter(onProgress?: (progress: any) => void) {
  */
 export async function removeBackground(
   input: string | Blob | HTMLImageElement,
-  onProgress?: (progress: any) => void,
+  onProgress?: ProgressCallback,
 ): Promise<string> {
   const model = await getSegmenter(onProgress)
 
-  let imageUrl = input
+  let imageUrl: string
   let shouldRevoke = false
 
-  if (input instanceof Blob) {
+  if (typeof input === 'string') {
+    imageUrl = input
+  } else if (input instanceof Blob) {
     imageUrl = URL.createObjectURL(input)
     shouldRevoke = true
-  } else if (input instanceof HTMLImageElement) {
+  } else {
     imageUrl = input.src
   }
 
   try {
     // Run inference
-    const output = await model(imageUrl as string)
+    const output = await model(imageUrl)
 
     // For RMBG-1.4, the output is a mask. We need to apply it.
     const mask = output[0].mask
 
     // We need to composite this mask with the original image.
     const { RawImage } = await import('@huggingface/transformers')
-    const image = await RawImage.fromURL(imageUrl as string)
+    const image = await RawImage.fromURL(imageUrl)
 
     // Create new image with alpha
     const result = image.clone().putAlpha(mask)
 
     // Convert to Blob URL
-    const blob = await result.toBlob()
+    const blob = (await result.toBlob()) as Blob
     return URL.createObjectURL(blob)
   } finally {
     if (shouldRevoke) {
-      URL.revokeObjectURL(imageUrl as string)
+      URL.revokeObjectURL(imageUrl)
     }
   }
 }
