@@ -2,22 +2,26 @@ import {
   Alert,
   Badge,
   Button,
+  Checkbox,
   Divider,
   Group,
   Loader,
   Paper,
+  Progress,
   Select,
   SimpleGrid,
   Slider,
   Stack,
   Text,
-  Title,
 } from '@mantine/core'
-import { Dropzone, type FileRejection, IMAGE_MIME_TYPE } from '@mantine/dropzone'
-import { IconDownload, IconPhotoPlus, IconRefresh } from '@tabler/icons-react'
+import { type FileRejection } from '@mantine/dropzone'
+import { IconDownload, IconRefresh } from '@tabler/icons-react'
 import { type CSSProperties, type ReactElement, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Cropper, { type Area } from 'react-easy-crop'
 
+import { ImageDropzone } from '@/components/ui/ImageDropzone'
+
+import { removeBackground } from '../../background-remove/utils/segmentation'
 import { canvasToBlobUrl, cropImageToCanvas } from '../utils/canvas'
 import { loadFileWithOrientation } from '../utils/image'
 import {
@@ -29,6 +33,7 @@ import {
 
 const EXPORT_MIME = 'image/jpeg'
 const MAX_FRACTION_DENOMINATOR = 8
+const ACCEPTED_MIME_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/avif']
 
 const formatInches = (value: number): string => {
   const absValue = Math.abs(value)
@@ -78,6 +83,8 @@ const formatMillimeters = (value: number): string => `${Number(value.toFixed(1))
 export function PassportPhotoTool(): ReactElement {
   const [activePresetId, setActivePresetId] = useState(defaultPassportPresetId)
   const [imageSrc, setImageSrc] = useState<string | null>(null)
+  const [originalImageSrc, setOriginalImageSrc] = useState<string | null>(null)
+  const [processedImageSrc, setProcessedImageSrc] = useState<string | null>(null)
   const [imageMeta, setImageMeta] = useState<{ width: number; height: number } | null>(null)
   const [imageElement, setImageElement] = useState<HTMLImageElement | null>(null)
   const [isLoading, setIsLoading] = useState(false)
@@ -85,6 +92,26 @@ export function PassportPhotoTool(): ReactElement {
   const [error, setError] = useState<string | null>(null)
   const [isOverlayVisible, setIsOverlayVisible] = useState(true)
   const [measurementUnit, setMeasurementUnit] = useState<'in' | 'mm'>('in')
+  const [backgroundColor, setBackgroundColor] = useState('#ffffff')
+  const [isRemovingBackground, setIsRemovingBackground] = useState(false)
+  const [isBackgroundRemoved, setIsBackgroundRemoved] = useState(false)
+  const [bgRemovalProgress, setBgRemovalProgress] = useState(0)
+
+  useEffect(() => {
+    return () => {
+      if (originalImageSrc) {
+        URL.revokeObjectURL(originalImageSrc)
+      }
+    }
+  }, [originalImageSrc])
+
+  useEffect(() => {
+    return () => {
+      if (processedImageSrc) {
+        URL.revokeObjectURL(processedImageSrc)
+      }
+    }
+  }, [processedImageSrc])
 
   const [crop, setCrop] = useState({ x: 0, y: 0 })
   const [zoom, setZoom] = useState(1)
@@ -234,6 +261,9 @@ export function PassportPhotoTool(): ReactElement {
     try {
       const loaded = await loadFileWithOrientation(file)
       setImageSrc(loaded.dataUrl)
+      setOriginalImageSrc(loaded.dataUrl)
+      setProcessedImageSrc(null)
+      setIsBackgroundRemoved(false)
       setImageMeta({ width: loaded.width, height: loaded.height })
       setZoom(1)
       setRotation(0)
@@ -285,6 +315,49 @@ export function PassportPhotoTool(): ReactElement {
     setCroppedAreaPixels(null)
   }, [])
 
+  const handleToggleBackgroundRemoval = useCallback(
+    async (checked: boolean) => {
+      if (!originalImageSrc) return
+
+      setIsBackgroundRemoved(checked)
+      setError(null)
+
+      if (!checked) {
+        // Revert to original
+        setImageSrc(originalImageSrc)
+        return
+      }
+
+      // If we already have a processed image, use it
+      if (processedImageSrc) {
+        setImageSrc(processedImageSrc)
+        return
+      }
+
+      // Otherwise, run the removal
+      setIsRemovingBackground(true)
+      setBgRemovalProgress(0)
+
+      try {
+        const resultUrl = await removeBackground(originalImageSrc, (data: any) => {
+          if (data.status === 'progress') {
+            setBgRemovalProgress(data.progress)
+          }
+        })
+        setProcessedImageSrc(resultUrl)
+        setImageSrc(resultUrl)
+      } catch (err) {
+        console.error(err)
+        setError('Failed to remove background. Please try again.')
+        setIsBackgroundRemoved(false) // Revert checkbox state on error
+      } finally {
+        setIsRemovingBackground(false)
+        setBgRemovalProgress(0)
+      }
+    },
+    [originalImageSrc, processedImageSrc],
+  )
+
   const buildPassportCanvas = useCallback(
     (preset: PassportPreset) => {
       if (!imageElement) {
@@ -294,7 +367,7 @@ export function PassportPhotoTool(): ReactElement {
         throw new Error('Finalize the crop area before exporting.')
       }
 
-      const croppedCanvas = cropImageToCanvas(imageElement, croppedAreaPixels, rotation)
+      const croppedCanvas = cropImageToCanvas(imageElement, croppedAreaPixels, rotation, backgroundColor)
 
       const subjectCanvas = document.createElement('canvas')
       subjectCanvas.width = preset.widthPx
@@ -316,13 +389,13 @@ export function PassportPhotoTool(): ReactElement {
         throw new Error('Unable to initialise export canvas context.')
       }
 
-      finalCtx.fillStyle = '#ffffff'
+      finalCtx.fillStyle = backgroundColor
       finalCtx.fillRect(0, 0, preset.widthPx, preset.heightPx)
       finalCtx.drawImage(subjectCanvas, 0, 0)
 
       return finalCanvas
     },
-    [croppedAreaPixels, imageElement, rotation],
+    [croppedAreaPixels, imageElement, rotation, backgroundColor],
   )
 
   const handleExport = useCallback(
@@ -374,51 +447,34 @@ export function PassportPhotoTool(): ReactElement {
       <input
         ref={fileInputRef}
         type="file"
-        accept={IMAGE_MIME_TYPE.join(',')}
-        style={{ display: 'none' }}
+        accept={ACCEPTED_MIME_TYPES.join(',')}
+        className="hidden"
         onChange={event => {
           void handleFileInputChange(event)
         }}
       />
 
       {!imageSrc ? (
-        <Dropzone
-          maxFiles={1}
-          accept={IMAGE_MIME_TYPE}
-          maxSize={8 * 1024 * 1024}
+        <ImageDropzone
           loading={isLoading}
           onDrop={files => {
             void handleDrop(files)
           }}
           onReject={handleReject}
-          radius="lg"
-          p="xl"
-          style={{ borderStyle: 'dashed' }}
-        >
-          <Stack align="center" gap="md">
-            {isLoading ? <Loader /> : <IconPhotoPlus size={48} stroke={1.4} />}
-            <Stack gap={4} align="center">
-              <Title order={3}>Upload a portrait photo</Title>
-              <Text size="sm" c="dimmed">
-                JPEG or PNG, up to 8 MB. Use a neutral, evenly lit background for best results.
-              </Text>
-              <Text size="sm" c="dimmed">
-                Drag & drop or click to browse.
-              </Text>
-            </Stack>
-          </Stack>
-        </Dropzone>
+          maxSize={8 * 1024 * 1024}
+          accept={ACCEPTED_MIME_TYPES}
+          title="Upload a portrait photo"
+          subDescription="Use a neutral, evenly lit background for best results."
+        />
       ) : (
         <Stack gap="xl">
           <SimpleGrid cols={{ base: 1, md: 2 }} spacing="xl">
             <Stack gap="md">
-              <Paper withBorder radius="lg" shadow="xs" p="xs" style={{ overflow: 'hidden' }}>
+              <Paper withBorder radius="lg" shadow="xs" p="xs" className="overflow-hidden">
                 <div
+                  className="relative w-full h-[min(70vw,480px)] transition-colors duration-200 ease-in-out"
                   style={{
-                    position: 'relative',
-                    width: '100%',
-                    height: 'min(70vw, 480px)',
-                    backgroundColor: 'var(--mantine-color-gray-1)',
+                    backgroundColor: backgroundColor,
                   }}
                 >
                   <Cropper
@@ -440,7 +496,10 @@ export function PassportPhotoTool(): ReactElement {
                     <Group
                       justify="center"
                       align="center"
-                      style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(255,255,255,0.65)' }}
+                      pos="absolute"
+                      inset={0}
+                      bg="white"
+                      opacity={0.65}
                     >
                       <Loader />
                     </Group>
@@ -475,6 +534,32 @@ export function PassportPhotoTool(): ReactElement {
                   onChange={setRotation}
                   aria-label="Rotation"
                 />
+
+                <Checkbox
+                  label={<Text size="sm" fw={600}>Remove background</Text>}
+                  checked={isBackgroundRemoved}
+                  onChange={event => {
+                    void handleToggleBackgroundRemoval(event.currentTarget.checked)
+                  }}
+                  disabled={isRemovingBackground}
+                />
+
+                {isRemovingBackground && bgRemovalProgress > 0 && bgRemovalProgress < 100 && (
+                  <Progress value={bgRemovalProgress} size="xs" />
+                )}
+
+                {isBackgroundRemoved && (
+                  <Group justify="space-between" align="center">
+                    <Text size="sm">Background Color</Text>
+                    <input
+                      type="color"
+                      value={backgroundColor}
+                      onChange={e => setBackgroundColor(e.target.value)}
+                      className="w-[60px] h-8 p-0 border border-gray-300 rounded-sm cursor-pointer"
+                      title="Choose background color"
+                    />
+                  </Group>
+                )}
 
                 <Group justify="flex-start" gap="sm">
                   <Button

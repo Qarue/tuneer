@@ -15,7 +15,7 @@ import {
 import { useDisclosure } from '@mantine/hooks'
 import { IconSearch, IconTargetArrow } from '@tabler/icons-react'
 import { type ReactElement, useMemo, useState } from 'react'
-import { NavLink as RouterNavLink, Outlet, useLocation } from 'react-router-dom'
+import { Link, NavLink as RouterNavLink, Outlet, useLocation } from 'react-router-dom'
 
 import { type ToolDefinition, toolRegistry } from '@/app/tool-registry'
 import { ThemeToggle } from '@/components/ui/ThemeToggle'
@@ -55,10 +55,12 @@ export function ShellLayout(): ReactElement {
         <Group h="100%" px="md" justify="space-between">
           <Group gap="sm">
             <Burger opened={opened} onClick={toggle} hiddenFrom="md" size="sm" />
-            <Group gap={6}>
-              <IconTargetArrow size={26} stroke={1.6} />
-              <Title order={3}>Tuneer</Title>
-            </Group>
+            <Link to="/" className="no-underline text-inherit">
+              <Group gap={6}>
+                <IconTargetArrow size={26} stroke={1.6} />
+                <Title order={3}>Tuneer</Title>
+              </Group>
+            </Link>
           </Group>
           <ThemeToggle />
         </Group>

@@ -1,6 +1,7 @@
 import type { ComponentType, LazyExoticComponent } from 'react'
 
 import { base64ToolDefinition } from '@/features/base64'
+import { backgroundRemoveToolDefinition } from '@/features/background-remove'
 import { imageConvertToolDefinition } from '@/features/image-convert/index'
 import { jwtToolDefinition } from '@/features/jwt/index'
 import { passportPhotoToolDefinition } from '@/features/passport-photo'
@@ -25,6 +26,7 @@ export const toolRegistry: ToolDefinition[] = [
   jwtToolDefinition,
   imageConvertToolDefinition,
   passportPhotoToolDefinition,
+  backgroundRemoveToolDefinition,
   pdfJoinToolDefinition,
   pdfSplitToolDefinition,
   pdfCompressToolDefinition,
