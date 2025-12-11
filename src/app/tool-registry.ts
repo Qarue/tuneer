@@ -1,14 +1,11 @@
 import type { ComponentType, LazyExoticComponent } from 'react'
 
+import { backgroundRemoveToolDefinition } from '@/features/background-remove'
 import { base64ToolDefinition } from '@/features/base64'
 import { imageConvertToolDefinition } from '@/features/image-convert/index'
 import { jwtToolDefinition } from '@/features/jwt/index'
 import { passportPhotoToolDefinition } from '@/features/passport-photo'
-import {
-  pdfCompressToolDefinition,
-  pdfJoinToolDefinition,
-  pdfSplitToolDefinition,
-} from '@/features/pdf'
+import { pdfCompressToolDefinition, pdfJoinToolDefinition, pdfSplitToolDefinition } from '@/features/pdf'
 
 export type ToolDefinition = {
   id: string
@@ -25,6 +22,7 @@ export const toolRegistry: ToolDefinition[] = [
   jwtToolDefinition,
   imageConvertToolDefinition,
   passportPhotoToolDefinition,
+  backgroundRemoveToolDefinition,
   pdfJoinToolDefinition,
   pdfSplitToolDefinition,
   pdfCompressToolDefinition,

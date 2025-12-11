@@ -22,6 +22,7 @@ export function cropImageToCanvas(
   image: HTMLImageElement,
   crop: Area,
   rotation: number,
+  backgroundColor?: string,
 ): HTMLCanvasElement {
   const canvas = document.createElement('canvas')
   const ctx = canvas.getContext('2d', { willReadFrequently: true })
@@ -51,8 +52,6 @@ export function cropImageToCanvas(
   safeCrop.width = Math.min(safeCrop.width, maxWidth)
   safeCrop.height = Math.min(safeCrop.height, maxHeight)
 
-  const data = ctx.getImageData(safeCrop.x, safeCrop.y, safeCrop.width, safeCrop.height)
-
   const croppedCanvas = document.createElement('canvas')
   croppedCanvas.width = safeCrop.width
   croppedCanvas.height = safeCrop.height
@@ -62,7 +61,23 @@ export function cropImageToCanvas(
     throw new Error('Could not create cropped context')
   }
 
-  croppedCtx.putImageData(data, 0, 0)
+  if (backgroundColor) {
+    croppedCtx.fillStyle = backgroundColor
+    croppedCtx.fillRect(0, 0, croppedCanvas.width, croppedCanvas.height)
+  }
+
+  croppedCtx.drawImage(
+    canvas,
+    safeCrop.x,
+    safeCrop.y,
+    safeCrop.width,
+    safeCrop.height,
+    0,
+    0,
+    safeCrop.width,
+    safeCrop.height,
+  )
+
   return croppedCanvas
 }
 
