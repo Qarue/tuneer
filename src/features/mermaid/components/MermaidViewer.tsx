@@ -3,6 +3,7 @@ import {
   Alert,
   Badge,
   Button,
+  Flex,
   Group,
   Loader,
   Modal,
@@ -283,6 +284,50 @@ export function MermaidViewer(): ReactElement {
     </Paper>
   )
 
+  const renderEditor = ({ fill = false }: { fill?: boolean } = {}) => (
+    <Stack gap="sm" style={fill ? { flex: 1, minHeight: 0 } : undefined}>
+      <Textarea
+        label="Diagram definition"
+        description="Renders automatically after you pause typing."
+        value={source}
+        onChange={event => {
+          setSource(event.currentTarget.value)
+          setStatus('rendering')
+        }}
+        placeholder="Enter Mermaid syntax..."
+        autosize={!fill}
+        minRows={fill ? 4 : 16}
+        data-autofocus
+        styles={{
+          input: {
+            fontFamily: 'var(--mantine-font-family-monospace)',
+            ...(fill ? { height: '100%' } : {}),
+          },
+          ...(fill
+            ? {
+                root: { display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 },
+                wrapper: { flex: 1, minHeight: 0 },
+              }
+            : {}),
+        }}
+        error={status === 'error' ? error : null}
+      />
+      <Text size="xs" c="dimmed">
+        {lineCount.toLocaleString()} {lineCount === 1 ? 'line' : 'lines'}
+      </Text>
+    </Stack>
+  )
+
+  const renderPreview = ({ grow = false }: { grow?: boolean } = {}) => (
+    <Stack gap="sm" style={grow ? { flex: 1, minHeight: 0 } : undefined}>
+      <Group justify="space-between" align="center">
+        {zoomControls}
+        {exportButtons}
+      </Group>
+      {diagramSurface({ grow })}
+    </Stack>
+  )
+
   return (
     <Stack gap="lg">
       <Group justify="space-between" align="center">
@@ -298,42 +343,15 @@ export function MermaidViewer(): ReactElement {
       </Group>
 
       <SimpleGrid cols={{ base: 1, lg: 2 }} spacing="lg">
-        <Stack gap="sm">
-          <Textarea
-            label="Diagram definition"
-            description="Renders automatically after you pause typing."
-            value={source}
-            onChange={event => {
-              setSource(event.currentTarget.value)
-              setStatus('rendering')
-            }}
-            placeholder="Enter Mermaid syntax..."
-            minRows={16}
-            autosize
-            data-autofocus
-            styles={{ input: { fontFamily: 'var(--mantine-font-family-monospace)' } }}
-            error={status === 'error' ? error : null}
-          />
-          <Text size="xs" c="dimmed">
-            {lineCount.toLocaleString()} {lineCount === 1 ? 'line' : 'lines'}
-          </Text>
-        </Stack>
-
-        <Stack gap="sm">
-          <Group justify="space-between" align="center">
-            {zoomControls}
-            {exportButtons}
-          </Group>
-
-          {diagramSurface()}
-        </Stack>
+        {renderEditor()}
+        {renderPreview()}
       </SimpleGrid>
 
       <Modal
         opened={fullscreen}
         onClose={() => setFullscreen(false)}
         fullScreen
-        title="Diagram preview"
+        title="Diagram editor"
         padding="md"
         styles={{
           body: {
@@ -343,13 +361,10 @@ export function MermaidViewer(): ReactElement {
           },
         }}
       >
-        <Stack gap="sm" style={{ flex: 1, minHeight: 0 }}>
-          <Group justify="space-between" align="center">
-            {zoomControls}
-            {exportButtons}
-          </Group>
-          {diagramSurface({ grow: true })}
-        </Stack>
+        <Flex gap="md" direction={{ base: 'column', md: 'row' }} style={{ flex: 1, minHeight: 0 }}>
+          {renderEditor({ fill: true })}
+          {renderPreview({ grow: true })}
+        </Flex>
       </Modal>
     </Stack>
   )
