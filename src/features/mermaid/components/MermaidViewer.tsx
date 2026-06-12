@@ -5,6 +5,7 @@ import {
   Button,
   Group,
   Loader,
+  Modal,
   Paper,
   SimpleGrid,
   Stack,
@@ -19,6 +20,7 @@ import {
   IconArrowsMaximize,
   IconCircleCheck,
   IconDownload,
+  IconMaximize,
   IconPhoto,
   IconRefresh,
   IconZoomIn,
@@ -44,6 +46,7 @@ export function MermaidViewer(): ReactElement {
   const [error, setError] = useState<string | null>(null)
   const [status, setStatus] = useState<RenderStatus>('idle')
   const [zoom, setZoom] = useState(1)
+  const [fullscreen, setFullscreen] = useState(false)
   const [debouncedSource] = useDebouncedValue(source, 400)
 
   useEffect(() => {
@@ -90,7 +93,12 @@ export function MermaidViewer(): ReactElement {
     }
 
     try {
-      await downloadPng(svg, 'diagram.png', undefined, colorScheme === 'dark' ? '#1e1e1e' : '#ffffff')
+      await downloadPng(
+        svg,
+        'diagram.png',
+        undefined,
+        colorScheme === 'dark' ? '#1e1e1e' : '#ffffff',
+      )
     } catch (downloadError) {
       notifications.show({
         color: 'red',
@@ -153,6 +161,128 @@ export function MermaidViewer(): ReactElement {
     return null
   })()
 
+  const zoomControls = (
+    <Group gap="xs">
+      <Tooltip label="Zoom out" withArrow>
+        <ActionIcon
+          variant="subtle"
+          color="gray"
+          onClick={() => adjustZoom(-ZOOM_STEP)}
+          disabled={!svg || zoom <= MIN_ZOOM}
+          aria-label="Zoom out"
+        >
+          <IconZoomOut size={18} />
+        </ActionIcon>
+      </Tooltip>
+      <Text size="xs" c="dimmed" w={44} ta="center">
+        {Math.round(zoom * 100)}%
+      </Text>
+      <Tooltip label="Zoom in" withArrow>
+        <ActionIcon
+          variant="subtle"
+          color="gray"
+          onClick={() => adjustZoom(ZOOM_STEP)}
+          disabled={!svg || zoom >= MAX_ZOOM}
+          aria-label="Zoom in"
+        >
+          <IconZoomIn size={18} />
+        </ActionIcon>
+      </Tooltip>
+      <Tooltip label="Reset zoom" withArrow>
+        <ActionIcon
+          variant="subtle"
+          color="gray"
+          onClick={() => setZoom(1)}
+          disabled={!svg || zoom === 1}
+          aria-label="Reset zoom"
+        >
+          <IconArrowsMaximize size={18} />
+        </ActionIcon>
+      </Tooltip>
+      <Tooltip label="Fullscreen" withArrow>
+        <ActionIcon
+          variant="subtle"
+          color="gray"
+          onClick={() => setFullscreen(true)}
+          disabled={!svg}
+          aria-label="View fullscreen"
+        >
+          <IconMaximize size={18} />
+        </ActionIcon>
+      </Tooltip>
+    </Group>
+  )
+
+  const exportButtons = (
+    <Group gap="xs">
+      <Button
+        variant="light"
+        color="brand"
+        size="xs"
+        leftSection={<IconDownload size={16} />}
+        onClick={handleDownloadSvg}
+        disabled={!svg}
+      >
+        SVG
+      </Button>
+      <Button
+        variant="light"
+        color="brand"
+        size="xs"
+        leftSection={<IconPhoto size={16} />}
+        onClick={() => {
+          void handleDownloadPng()
+        }}
+        disabled={!svg}
+      >
+        PNG
+      </Button>
+    </Group>
+  )
+
+  const diagramSurface = ({ grow = false }: { grow?: boolean } = {}) => (
+    <Paper
+      withBorder
+      radius="md"
+      p="md"
+      style={{
+        minHeight: 320,
+        overflow: 'auto',
+        position: 'relative',
+        ...(grow ? { flex: 1 } : {}),
+      }}
+    >
+      {svg ? (
+        <div
+          style={{
+            transform: `scale(${zoom})`,
+            transformOrigin: 'top left',
+            width: 'fit-content',
+          }}
+          dangerouslySetInnerHTML={{ __html: svg }}
+        />
+      ) : (
+        <Group justify="center" align="center" h={288}>
+          {status === 'error' ? (
+            <Alert
+              icon={<IconAlertCircle size={18} />}
+              color="red"
+              variant="light"
+              title="Could not render diagram"
+              w="100%"
+            >
+              {error}
+            </Alert>
+          ) : (
+            <Text size="sm" c="dimmed">
+              Diagram preview appears here.
+            </Text>
+          )}
+        </Group>
+      )}
+    </Paper>
+  )
+
   return (
     <Stack gap="lg">
       <Group justify="space-between" align="center">
@@ -191,108 +321,36 @@ export function MermaidViewer(): ReactElement {
 
         <Stack gap="sm">
           <Group justify="space-between" align="center">
-            <Group gap="xs">
-              <Tooltip label="Zoom out" withArrow>
-                <ActionIcon
-                  variant="subtle"
-                  color="gray"
-                  onClick={() => adjustZoom(-ZOOM_STEP)}
-                  disabled={!svg || zoom <= MIN_ZOOM}
-                  aria-label="Zoom out"
-                >
-                  <IconZoomOut size={18} />
-                </ActionIcon>
-              </Tooltip>
-              <Text size="xs" c="dimmed" w={44} ta="center">
-                {Math.round(zoom * 100)}%
-              </Text>
-              <Tooltip label="Zoom in" withArrow>
-                <ActionIcon
-                  variant="subtle"
-                  color="gray"
-                  onClick={() => adjustZoom(ZOOM_STEP)}
-                  disabled={!svg || zoom >= MAX_ZOOM}
-                  aria-label="Zoom in"
-                >
-                  <IconZoomIn size={18} />
-                </ActionIcon>
-              </Tooltip>
-              <Tooltip label="Reset zoom" withArrow>
-                <ActionIcon
-                  variant="subtle"
-                  color="gray"
-                  onClick={() => setZoom(1)}
-                  disabled={!svg || zoom === 1}
-                  aria-label="Reset zoom"
-                >
-                  <IconArrowsMaximize size={18} />
-                </ActionIcon>
-              </Tooltip>
-            </Group>
-
-            <Group gap="xs">
-              <Button
-                variant="light"
-                color="brand"
-                size="xs"
-                leftSection={<IconDownload size={16} />}
-                onClick={handleDownloadSvg}
-                disabled={!svg}
-              >
-                SVG
-              </Button>
-              <Button
-                variant="light"
-                color="brand"
-                size="xs"
-                leftSection={<IconPhoto size={16} />}
-                onClick={() => {
-                  void handleDownloadPng()
-                }}
-                disabled={!svg}
-              >
-                PNG
-              </Button>
-            </Group>
+            {zoomControls}
+            {exportButtons}
           </Group>
 
-          <Paper
-            withBorder
-            radius="md"
-            p="md"
-            style={{ minHeight: 320, overflow: 'auto', position: 'relative' }}
-          >
-            {svg ? (
-              <div
-                style={{
-                  transform: `scale(${zoom})`,
-                  transformOrigin: 'top left',
-                  width: 'fit-content',
-                }}
-                dangerouslySetInnerHTML={{ __html: svg }}
-              />
-            ) : (
-              <Group justify="center" align="center" h={288}>
-                {status === 'error' ? (
-                  <Alert
-                    icon={<IconAlertCircle size={18} />}
-                    color="red"
-                    variant="light"
-                    title="Could not render diagram"
-                    w="100%"
-                  >
-                    {error}
-                  </Alert>
-                ) : (
-                  <Text size="sm" c="dimmed">
-                    Diagram preview appears here.
-                  </Text>
-                )}
-              </Group>
-            )}
-          </Paper>
+          {diagramSurface()}
         </Stack>
       </SimpleGrid>
+
+      <Modal
+        opened={fullscreen}
+        onClose={() => setFullscreen(false)}
+        fullScreen
+        title="Diagram preview"
+        padding="md"
+        styles={{
+          body: {
+            height: 'calc(100vh - 60px)',
+            display: 'flex',
+            flexDirection: 'column',
+          },
+        }}
+      >
+        <Stack gap="sm" style={{ flex: 1, minHeight: 0 }}>
+          <Group justify="space-between" align="center">
+            {zoomControls}
+            {exportButtons}
+          </Group>
+          {diagramSurface({ grow: true })}
+        </Stack>
+      </Modal>
     </Stack>
   )
 }
