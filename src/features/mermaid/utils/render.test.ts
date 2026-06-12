@@ -45,6 +45,24 @@ describe('renderMermaid', () => {
     expect(initialize).toHaveBeenCalledWith(expect.objectContaining({ theme: 'default' }))
   })
 
+  it('passes the hand-drawn look when requested', async () => {
+    parse.mockResolvedValue(true)
+    render.mockResolvedValue({ svg: '<svg />' })
+
+    await renderMermaid('graph TD; A-->B', 'dark', 'handDrawn')
+
+    expect(initialize).toHaveBeenCalledWith(expect.objectContaining({ look: 'handDrawn' }))
+  })
+
+  it('defaults to the classic look', async () => {
+    parse.mockResolvedValue(true)
+    render.mockResolvedValue({ svg: '<svg />' })
+
+    await renderMermaid('graph TD; A-->B', 'dark')
+
+    expect(initialize).toHaveBeenCalledWith(expect.objectContaining({ look: 'classic' }))
+  })
+
   it('returns the parse error message for invalid source', async () => {
     parse.mockRejectedValue(new Error('Parse error on line 1'))
 

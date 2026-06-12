@@ -10,6 +10,7 @@ import {
   Paper,
   SimpleGrid,
   Stack,
+  Switch,
   Text,
   Textarea,
   Tooltip,
@@ -48,13 +49,18 @@ export function MermaidViewer(): ReactElement {
   const [status, setStatus] = useState<RenderStatus>('idle')
   const [zoom, setZoom] = useState(1)
   const [fullscreen, setFullscreen] = useState(false)
+  const [handDrawn, setHandDrawn] = useState(false)
   const [debouncedSource] = useDebouncedValue(source, 400)
 
   useEffect(() => {
     let cancelled = false
 
     const run = async () => {
-      const result = await renderMermaid(debouncedSource, colorScheme)
+      const result = await renderMermaid(
+        debouncedSource,
+        colorScheme,
+        handDrawn ? 'handDrawn' : 'classic',
+      )
 
       if (cancelled) {
         return
@@ -76,7 +82,7 @@ export function MermaidViewer(): ReactElement {
     return () => {
       cancelled = true
     }
-  }, [debouncedSource, colorScheme])
+  }, [debouncedSource, colorScheme, handDrawn])
 
   const lineCount = useMemo(() => source.split('\n').length, [source])
 
@@ -164,6 +170,13 @@ export function MermaidViewer(): ReactElement {
 
   const zoomControls = (
     <Group gap="xs">
+      <Switch
+        size="sm"
+        label="Hand-drawn"
+        checked={handDrawn}
+        onChange={event => setHandDrawn(event.currentTarget.checked)}
+        aria-label="Toggle hand-drawn look"
+      />
       <Tooltip label="Zoom out" withArrow>
         <ActionIcon
           variant="subtle"

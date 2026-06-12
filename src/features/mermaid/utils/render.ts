@@ -1,5 +1,7 @@
 export type MermaidTheme = 'light' | 'dark'
 
+export type MermaidLook = 'classic' | 'handDrawn'
+
 export type RenderResult = { ok: true; svg: string } | { ok: false; error: string }
 
 let renderCounter = 0
@@ -29,6 +31,7 @@ export const SAMPLE_DIAGRAM = `flowchart TD
 export const renderMermaid = async (
   source: string,
   theme: MermaidTheme = 'dark',
+  look: MermaidLook = 'classic',
 ): Promise<RenderResult> => {
   const trimmed = source.trim()
 
@@ -43,6 +46,7 @@ export const renderMermaid = async (
       startOnLoad: false,
       securityLevel: 'strict',
       theme: theme === 'dark' ? 'dark' : 'default',
+      look,
       // Render labels as native SVG <text> rather than HTML <foreignObject>.
       // foreignObject taints a canvas, which would block PNG export.
       htmlLabels: false,
