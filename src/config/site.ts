@@ -3,7 +3,7 @@ export const siteConfig = {
   shortName: 'Tuneer',
   tagline: 'Browser Toolkit',
   description:
-    'Tuneer is a privacy-first toolkit of in-browser utilities for PDFs, text encoding, images, and identity photos—no uploads, just fast results.',
+    'Tuneer is a privacy-first toolkit of in-browser utilities for PDFs, text encoding, images, diagrams, and identity photos—no uploads, just fast results.',
   url: 'https://tuneer.vercel.app',
   socialImage: 'https://tuneer.vercel.app/social-card.svg',
   keywords: [
@@ -14,12 +14,13 @@ export const siteConfig = {
     'passport photo maker',
     'base64 encoder',
     'jwt decoder',
+    'mermaid diagram viewer',
     'privacy first utilities',
   ],
   seoDefaults: {
     title: 'Tuneer Toolkit | Browser Toolkit',
     description:
-      'Privacy-first browser utilities for PDFs, images, text encoding, and identity photos.',
+      'Privacy-first browser utilities for PDFs, images, diagrams, text encoding, and identity photos.',
     canonical: 'https://tuneer.vercel.app/',
   },
 }

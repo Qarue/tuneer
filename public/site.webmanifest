@@ -5,7 +5,7 @@
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#192050",
-  "description": "Privacy-first browser toolkit for PDFs, images, text encoding, and identity photos.",
+  "description": "Privacy-first browser toolkit for PDFs, images, diagrams, text encoding, and identity photos.",
   "icons": [
     {
       "src": "/vite.svg",

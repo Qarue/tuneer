@@ -10,7 +10,7 @@ export function HomePage(): ReactElement {
   useSeo({
     title: 'Privacy-first browser toolkit for PDFs, images, and text',
     description:
-      'Tuneer offers fast, private, in-browser tools for PDFs, passport photos, Base64, JWTs, and image conversion—no uploads required.',
+      'Tuneer offers fast, private, in-browser tools for PDFs, passport photos, Base64, JWTs, Mermaid diagrams, and image conversion—no uploads required.',
     keywords: siteConfig.keywords,
     canonical: `${siteConfig.url}/`,
   })

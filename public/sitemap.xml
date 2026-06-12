@@ -16,6 +16,11 @@
     <priority>0.8</priority>
   </url>
   <url>
+  <loc>https://tuneer.vercel.app/tools/mermaid-viewer</loc>
+    <lastmod>2026-06-11</lastmod>
+    <priority>0.8</priority>
+  </url>
+  <url>
   <loc>https://tuneer.vercel.app/tools/image-convert</loc>
     <lastmod>2025-11-13</lastmod>
     <priority>0.8</priority>
