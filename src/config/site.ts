@@ -5,6 +5,7 @@ export const siteConfig = {
   description:
     'Tuneer is a privacy-first toolkit of in-browser utilities for PDFs, text encoding, images, diagrams, and identity photos—no uploads, just fast results.',
   url: 'https://tuneer.vercel.app',
+  repository: 'https://github.com/Qarue/tuneer',
   socialImage: 'https://tuneer.vercel.app/social-card.svg',
   keywords: [
     'browser tools',

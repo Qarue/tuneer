@@ -1,4 +1,5 @@
 import {
+  ActionIcon,
   Anchor,
   AppShell,
   Badge,
@@ -11,9 +12,10 @@ import {
   Text,
   TextInput,
   Title,
+  Tooltip,
 } from '@mantine/core'
 import { useDisclosure } from '@mantine/hooks'
-import { IconSearch, IconTargetArrow } from '@tabler/icons-react'
+import { IconBrandGithub, IconSearch, IconTargetArrow } from '@tabler/icons-react'
 import { type ReactElement, useMemo, useState } from 'react'
 import { Link, NavLink as RouterNavLink, Outlet, useLocation } from 'react-router-dom'
 
@@ -55,14 +57,31 @@ export function ShellLayout(): ReactElement {
         <Group h="100%" px="md" justify="space-between">
           <Group gap="sm">
             <Burger opened={opened} onClick={toggle} hiddenFrom="md" size="sm" />
-            <Link to="/" className="no-underline text-inherit">
+            <Link to="/" className="text-inherit no-underline">
               <Group gap={6}>
                 <IconTargetArrow size={26} stroke={1.6} />
                 <Title order={3}>Tuneer</Title>
               </Group>
             </Link>
           </Group>
-          <ThemeToggle />
+          <Group gap="sm">
+            <Tooltip label="View source on GitHub" withArrow position="bottom">
+              <ActionIcon
+                component="a"
+                href={siteConfig.repository}
+                target="_blank"
+                rel="noopener noreferrer"
+                variant="light"
+                color="brand"
+                size="lg"
+                radius="xl"
+                aria-label="View source on GitHub"
+              >
+                <IconBrandGithub size={18} />
+              </ActionIcon>
+            </Tooltip>
+            <ThemeToggle />
+          </Group>
         </Group>
       </AppShell.Header>
 
