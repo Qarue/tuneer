@@ -29,13 +29,14 @@ import {
   IconZoomIn,
   IconZoomOut,
 } from '@tabler/icons-react'
-import { type ReactElement, useEffect, useMemo, useRef, useState } from 'react'
+import { type ReactElement, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { selectColorScheme, useThemeStore } from '@/state/theme-store'
 
-import { type DraggableController, enableNodeDragging } from '../utils/draggable'
+import { type DraggableController } from '../utils/draggable'
 import { downloadPng, downloadSvg } from '../utils/export'
 import { renderMermaid, SAMPLE_DIAGRAM } from '../utils/render'
+import { DragSurface } from './DragSurface'
 
 type RenderStatus = 'idle' | 'rendering' | 'success' | 'error'
 
@@ -53,7 +54,7 @@ export function MermaidViewer(): ReactElement {
   const [fullscreen, setFullscreen] = useState(false)
   const [handDrawn, setHandDrawn] = useState(false)
   const [debouncedSource] = useDebouncedValue(source, 400)
-  const dragControllersRef = useRef<DraggableController[]>([])
+  const dragControllersRef = useRef<Set<DraggableController>>(new Set())
 
   useEffect(() => {
     let cancelled = false
@@ -87,23 +88,16 @@ export function MermaidViewer(): ReactElement {
     }
   }, [debouncedSource, colorScheme, handDrawn])
 
-  // Enable node dragging on the freshly rendered SVG(s). Re-runs whenever the
-  // diagram changes or the fullscreen copy mounts/unmounts.
-  useEffect(() => {
-    if (!svg) {
-      dragControllersRef.current = []
-      return
-    }
+  // Each DragSurface registers its controller on mount and removes it on
+  // unmount, so independently mounted copies (inline + fullscreen modal) are
+  // tracked without depending on render timing.
+  const registerSurface = useCallback((controller: DraggableController) => {
+    dragControllersRef.current.add(controller)
+  }, [])
 
-    const surfaces = document.querySelectorAll<SVGSVGElement>('.mermaid-drag-surface svg')
-    const controllers = Array.from(surfaces, surface => enableNodeDragging(surface))
-    dragControllersRef.current = controllers
-
-    return () => {
-      controllers.forEach(controller => controller.destroy())
-      dragControllersRef.current = []
-    }
-  }, [svg, fullscreen])
+  const unregisterSurface = useCallback((controller: DraggableController) => {
+    dragControllersRef.current.delete(controller)
+  }, [])
 
   const handleResetLayout = () => {
     dragControllersRef.current.forEach(controller => controller.reset())
@@ -111,12 +105,25 @@ export function MermaidViewer(): ReactElement {
 
   const lineCount = useMemo(() => source.split('\n').length, [source])
 
+  // Serialize the live SVG from the currently visible surface so exports
+  // include any node positions the user dragged. Falls back to the rendered
+  // markup when no surface is mounted yet.
+  const getActiveSvgMarkup = (): string => {
+    const surfaces = document.querySelectorAll<SVGSVGElement>('.mermaid-drag-surface svg')
+    if (surfaces.length === 0) {
+      return svg
+    }
+
+    const active = fullscreen ? surfaces[surfaces.length - 1] : surfaces[0]
+    return active.outerHTML
+  }
+
   const handleDownloadSvg = () => {
     if (!svg) {
       return
     }
 
-    downloadSvg(svg)
+    downloadSvg(getActiveSvgMarkup())
   }
 
   const handleDownloadPng = async () => {
@@ -126,7 +133,7 @@ export function MermaidViewer(): ReactElement {
 
     try {
       await downloadPng(
-        svg,
+        getActiveSvgMarkup(),
         'diagram.png',
         undefined,
         colorScheme === 'dark' ? '#1e1e1e' : '#ffffff',
@@ -303,14 +310,11 @@ export function MermaidViewer(): ReactElement {
       }}
     >
       {svg ? (
-        <div
-          className="mermaid-drag-surface"
-          style={{
-            transform: `scale(${zoom})`,
-            transformOrigin: 'top left',
-            width: 'fit-content',
-          }}
-          dangerouslySetInnerHTML={{ __html: svg }}
+        <DragSurface
+          html={svg}
+          zoom={zoom}
+          onMount={registerSurface}
+          onUnmount={unregisterSurface}
         />
       ) : (
         <Group justify="center" align="center" h={288}>
