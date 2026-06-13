@@ -19,6 +19,7 @@ import { useDebouncedValue } from '@mantine/hooks'
 import { notifications } from '@mantine/notifications'
 import {
   IconAlertCircle,
+  IconArrowBackUp,
   IconArrowsMaximize,
   IconCircleCheck,
   IconDownload,
@@ -28,10 +29,11 @@ import {
   IconZoomIn,
   IconZoomOut,
 } from '@tabler/icons-react'
-import { type ReactElement, useEffect, useMemo, useState } from 'react'
+import { type ReactElement, useEffect, useMemo, useRef, useState } from 'react'
 
 import { selectColorScheme, useThemeStore } from '@/state/theme-store'
 
+import { type DraggableController, enableNodeDragging } from '../utils/draggable'
 import { downloadPng, downloadSvg } from '../utils/export'
 import { renderMermaid, SAMPLE_DIAGRAM } from '../utils/render'
 
@@ -51,6 +53,7 @@ export function MermaidViewer(): ReactElement {
   const [fullscreen, setFullscreen] = useState(false)
   const [handDrawn, setHandDrawn] = useState(false)
   const [debouncedSource] = useDebouncedValue(source, 400)
+  const dragControllersRef = useRef<DraggableController[]>([])
 
   useEffect(() => {
     let cancelled = false
@@ -83,6 +86,28 @@ export function MermaidViewer(): ReactElement {
       cancelled = true
     }
   }, [debouncedSource, colorScheme, handDrawn])
+
+  // Enable node dragging on the freshly rendered SVG(s). Re-runs whenever the
+  // diagram changes or the fullscreen copy mounts/unmounts.
+  useEffect(() => {
+    if (!svg) {
+      dragControllersRef.current = []
+      return
+    }
+
+    const surfaces = document.querySelectorAll<SVGSVGElement>('.mermaid-drag-surface svg')
+    const controllers = Array.from(surfaces, surface => enableNodeDragging(surface))
+    dragControllersRef.current = controllers
+
+    return () => {
+      controllers.forEach(controller => controller.destroy())
+      dragControllersRef.current = []
+    }
+  }, [svg, fullscreen])
+
+  const handleResetLayout = () => {
+    dragControllersRef.current.forEach(controller => controller.reset())
+  }
 
   const lineCount = useMemo(() => source.split('\n').length, [source])
 
@@ -213,6 +238,17 @@ export function MermaidViewer(): ReactElement {
           <IconArrowsMaximize size={18} />
         </ActionIcon>
       </Tooltip>
+      <Tooltip label="Reset layout" withArrow>
+        <ActionIcon
+          variant="subtle"
+          color="gray"
+          onClick={handleResetLayout}
+          disabled={!svg}
+          aria-label="Reset node layout"
+        >
+          <IconArrowBackUp size={18} />
+        </ActionIcon>
+      </Tooltip>
       <Tooltip label="Fullscreen" withArrow>
         <ActionIcon
           variant="subtle"
@@ -268,6 +304,7 @@ export function MermaidViewer(): ReactElement {
     >
       {svg ? (
         <div
+          className="mermaid-drag-surface"
           style={{
             transform: `scale(${zoom})`,
             transformOrigin: 'top left',
